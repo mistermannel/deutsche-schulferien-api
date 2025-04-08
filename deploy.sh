@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Exit on error
+set -e
+
+echo "Starting deployment..."
+
 # Update system
 sudo apt-get update
 sudo apt-get upgrade -y
@@ -22,6 +27,7 @@ sudo chown -R $USER:$USER /var/www/schulferien-api
 cp -r . /var/www/schulferien-api/
 
 # Install dependencies
+echo "Installing dependencies..."
 cd /var/www/schulferien-api
 npm install --production
 
@@ -58,9 +64,9 @@ sudo apt-get install -y certbot python3-certbot-nginx
 # Obtain SSL certificate
 sudo certbot --nginx -d fibosaur.com -d www.fibosaur.com --non-interactive --agree-tos --email your-email@example.com
 
-# Start the application with PM2
-cd /var/www/schulferien-api
-pm2 start ecosystem.config.js
+# Restart the application
+echo "Restarting application..."
+pm2 restart schulferien-api || pm2 start index.js --name schulferien-api
 
 # Save PM2 process list
 pm2 save
@@ -74,4 +80,4 @@ sudo ufw allow 443
 sudo ufw allow ssh
 sudo ufw enable
 
-echo "Deployment completed! Your API should now be running at https://fibosaur.com" 
+echo "Deployment completed successfully!" 

@@ -9,16 +9,23 @@ const rateLimit = require("express-rate-limit");
 
 const app = express();
 
-const PORT = process.env.PORT || 3001;
-const NODE_ENV = process.env.NODE_ENV || "development";
+const PORT = process.env.PORT || 8080;
+const NODE_ENV = process.env.NODE_ENV || "production";
 
 // Security headers
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,  // Disable CSP for API
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false
+}));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false
 });
 app.use(limiter);
 
@@ -72,8 +79,23 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(
     `Express Server started on Port ${app.get("port")} | Environment: ${app.get("env")}`
   );
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use`);
+  } else {
+    console.error('Error starting server:', err);
+  }
+  process.exit(1);
+});
+
+// Handle process termination
+process.on('SIGTERM', () => {
+  server.close(() => {
+    console.log('Server terminated');
+    process.exit(0);
+  });
 });
