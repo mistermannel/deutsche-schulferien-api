@@ -1,58 +1,74 @@
 const express = require("express");
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 
 const router = express.Router();
-//const data = fs.readFileSync(path.join(__dirname, "./vacations.json"));
 
-// Filter to get all vacs depending on the year
+// Cache for storing parsed JSON data
+const cache = new Map();
+
+// Service layer for data access
+const vacationService = {
+  async getVacationsByYear(year) {
+    try {
+      // Check cache first
+      if (cache.has(year)) {
+        return cache.get(year);
+      }
+
+      const filePath = path.join(__dirname, "./years", `${year}.json`);
+      const data = await fs.readFile(filePath, 'utf8');
+      const vacations = JSON.parse(data);
+      
+      // Cache the result
+      cache.set(year, vacations);
+      return vacations;
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new Error(`No vacation data found for year ${year}`);
+      }
+      throw error;
+    }
+  },
+
+  async getVacationsByYearAndState(year, state) {
+    const vacations = await this.getVacationsByYear(year);
+    const filtered = vacations.filter(vac => 
+      vac.stateCode === String(state) && vac.year === Number(year)
+    );
+    
+    if (filtered.length === 0) {
+      throw new Error(`No vacations found for year ${year} and state ${state}`);
+    }
+    
+    return filtered;
+  }
+};
+
+// Route handlers
 const getAllVacationsByYear = async (req, res, next) => {
   try {
-    const dataY = fs.readFileSync(
-      path.join(__dirname, "./years/" + req.params.year + ".json")
-    );
-    const vacs = JSON.parse(dataY);
-    if (!vacs) {
-      const err = new Error(
-        "No vacations found for this filter settings. Please check documentation. Example route would be /v1/2022 "
-      );
-      err.status = 404;
-      throw err;
-    }
-    res.json(vacs);
-  } catch (e) {
-    next(e);
+    const vacations = await vacationService.getVacationsByYear(req.params.year);
+    res.json(vacations);
+  } catch (error) {
+    next(error);
   }
 };
 
-router.route("/api/v1/:year").get(getAllVacationsByYear);
-
-// Filter to get all vacs depending on the year and/or state
 const getAllVacationsByYearAndState = async (req, res, next) => {
   try {
-    const dataY = fs.readFileSync(
-      path.join(__dirname, "./years/" + req.params.year + ".json")
+    const vacations = await vacationService.getVacationsByYearAndState(
+      req.params.year,
+      req.params.state
     );
-    const vacs = JSON.parse(dataY);
-    const vacations = vacs.filter((vac) => {
-      return (
-        vac.stateCode === String(req.params.state) &&
-        vac.year === Number(req.params.year)
-      );
-    });
-    if (!vacations || vacations.length === 0) {
-      const err = new Error(
-        "No vacations found for this filter settings. Please check documentation. Example route would be /v1/2022/BY "
-      );
-      err.status = 404;
-      throw err;
-    }
     res.json(vacations);
-  } catch (e) {
-    next(e);
+  } catch (error) {
+    next(error);
   }
 };
 
+// Routes
+router.route("/api/v1/:year").get(getAllVacationsByYear);
 router.route("/api/v1/:year/:state").get(getAllVacationsByYearAndState);
 
 module.exports = router;
