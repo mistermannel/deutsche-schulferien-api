@@ -1,7 +1,6 @@
 # Deutsche Schulferien API
 
-[![Deployment status from DeployBot](https://fuxdev.deploybot.com/badge/77558060233260/207735.svg)](https://deploybot.com)
-[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Einleitung
 
@@ -13,10 +12,10 @@ Es können alle Schulferien nach Jahr oder nach Jahr und Bundesland abgerufen we
 
 Beispiel:
 nach Jahr 2022
-https://ferien-api.maxleistner.de/api/v1/2022/
+https://api.example.com/api/v1/2022/
 
 nach Jahr 2022 und Bundesland Bayern
-https://ferien-api.maxleistner.de/api/v1/2022/BY/
+https://api.example.com/api/v1/2022/BY/
 
 ## Bundesland-Codes
 
