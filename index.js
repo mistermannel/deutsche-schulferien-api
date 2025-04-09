@@ -37,10 +37,15 @@ app.set("env", NODE_ENV);
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  methods: ['GET'],
-  allowedHeaders: ['Content-Type']
+  origin: '*',
+  methods: ['GET', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'Content-Range'],
+  maxAge: 1728000
 }));
+
+// Handle OPTIONS requests
+app.options('*', cors());
 
 // Logging
 app.use(logger("tiny"));
